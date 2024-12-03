@@ -1,0 +1,313 @@
+import java.awt.*;
+import java.util.HashMap;
+import javax.swing.*;
+
+class ECommercePlatform {
+    // Data Storage
+    private static HashMap<Integer, Product> products = new HashMap<>();
+    private static HashMap<Integer, Order> orders = new HashMap<>();
+    private static int productIdCounter = 1;
+    private static int orderIdCounter = 1;
+
+    public static void main(String[] args) {
+        // Initialize GUI
+        JFrame frame = new JFrame("E-Commerce Platform");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(600, 400);
+
+        // Main Menu
+        JPanel menuPanel = new JPanel();
+        menuPanel.setLayout(new GridLayout(5, 1, 10, 10));
+        menuPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JButton btnAddProduct = new JButton("Add Product");
+        JButton btnViewProducts = new JButton("View Products");
+        JButton btnPlaceOrder = new JButton("Place Order");
+        JButton btnViewOrders = new JButton("View Orders");
+        JButton btnExit = new JButton("Exit");
+
+        menuPanel.add(btnAddProduct);
+        menuPanel.add(btnViewProducts);
+        menuPanel.add(btnPlaceOrder);
+        menuPanel.add(btnViewOrders);
+        menuPanel.add(btnExit);
+
+        frame.add(menuPanel);
+        frame.setVisible(true);
+
+        // Button Listeners
+        btnAddProduct.addActionListener(e -> openAddProduct(frame));
+        btnViewProducts.addActionListener(e -> viewProducts(frame));
+        btnPlaceOrder.addActionListener(e -> placeOrder(frame));
+        btnViewOrders.addActionListener(e -> viewOrders(frame));
+        btnExit.addActionListener(e -> System.exit(0));
+    }
+
+    // Add Product
+    private static void openAddProduct(JFrame parentFrame) {
+        parentFrame.getContentPane().removeAll();
+        parentFrame.setLayout(new GridLayout(6, 2, 10, 10));
+
+        JLabel lblName = new JLabel("Product Name:");
+        JTextField txtName = new JTextField();
+        JLabel lblPrice = new JLabel("Price:");
+        JTextField txtPrice = new JTextField();
+        JLabel lblQuantity = new JLabel("Quantity:");
+        JTextField txtQuantity = new JTextField();
+        JButton btnAdd = new JButton("Add Product");
+        JButton btnBack = new JButton("Back");
+
+        parentFrame.add(lblName);
+        parentFrame.add(txtName);
+        parentFrame.add(lblPrice);
+        parentFrame.add(txtPrice);
+        parentFrame.add(lblQuantity);
+        parentFrame.add(txtQuantity);
+        parentFrame.add(btnAdd);
+        parentFrame.add(btnBack);
+
+        btnAdd.addActionListener(e -> {
+            String name = txtName.getText();
+            String priceStr = txtPrice.getText();
+            String quantityStr = txtQuantity.getText();
+
+            if (name.isEmpty() || priceStr.isEmpty() || quantityStr.isEmpty()) {
+                JOptionPane.showMessageDialog(parentFrame, "Please fill in all fields!", "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                try {
+                    double price = Double.parseDouble(priceStr);
+                    int quantity = Integer.parseInt(quantityStr);
+                    products.put(productIdCounter++, new Product(name, price, quantity));
+                    JOptionPane.showMessageDialog(parentFrame, "Product added successfully!");
+                    txtName.setText("");
+                    txtPrice.setText("");
+                    txtQuantity.setText("");
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(parentFrame, "Invalid price or quantity!", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        btnBack.addActionListener(e -> {
+            parentFrame.getContentPane().removeAll();
+            parentFrame.setLayout(new GridLayout(5, 1, 10, 10));
+
+            createMainMenu(parentFrame);
+            parentFrame.revalidate();
+            parentFrame.repaint();
+        });
+
+        parentFrame.revalidate();
+        parentFrame.repaint();
+    }
+
+    // View Products
+    private static void viewProducts(JFrame parentFrame) {
+        parentFrame.getContentPane().removeAll();
+        parentFrame.setLayout(new BorderLayout());
+
+        DefaultListModel<String> productListModel = new DefaultListModel<>();
+        JList<String> productList = new JList<>(productListModel);
+        products.forEach((k, v) -> productListModel.addElement("ID: " + k + ", Name: " + v.getName() + ", Price: " + v.getPrice() + ", Quantity: " + v.getQuantity()));
+
+        JScrollPane scrollPane = new JScrollPane(productList);
+
+        parentFrame.add(scrollPane, BorderLayout.CENTER);
+
+        JButton btnBack = new JButton("Back");
+        parentFrame.add(btnBack, BorderLayout.SOUTH);
+
+        btnBack.addActionListener(e -> {
+            parentFrame.getContentPane().removeAll();
+            parentFrame.setLayout(new GridLayout(5, 1, 10, 10));
+
+            createMainMenu(parentFrame);
+            parentFrame.revalidate();
+            parentFrame.repaint();
+        });
+
+        parentFrame.revalidate();
+        parentFrame.repaint();
+    }
+
+    // Place Order
+    private static void placeOrder(JFrame parentFrame) {
+        parentFrame.getContentPane().removeAll();
+        parentFrame.setLayout(new GridLayout(4, 2, 10, 10));
+
+        JLabel lblCustomerName = new JLabel("Customer Name:");
+        JTextField txtCustomerName = new JTextField();
+        JLabel lblProductId = new JLabel("Product ID:");
+        JTextField txtProductId = new JTextField();
+        JLabel lblQuantity = new JLabel("Quantity:");
+        JTextField txtQuantity = new JTextField();
+        JButton btnPlaceOrder = new JButton("Place Order");
+        JButton btnBack = new JButton("Back");
+
+        parentFrame.add(lblCustomerName);
+        parentFrame.add(txtCustomerName);
+        parentFrame.add(lblProductId);
+        parentFrame.add(txtProductId);
+        parentFrame.add(lblQuantity);
+        parentFrame.add(txtQuantity);
+        parentFrame.add(btnPlaceOrder);
+        parentFrame.add(btnBack);
+
+        btnPlaceOrder.addActionListener(e -> {
+            String customerName = txtCustomerName.getText();
+            String productIdStr = txtProductId.getText();
+            String quantityStr = txtQuantity.getText();
+
+            if (customerName.isEmpty() || productIdStr.isEmpty() || quantityStr.isEmpty()) {
+                JOptionPane.showMessageDialog(parentFrame, "Please fill in all fields!", "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                try {
+                    int productId = Integer.parseInt(productIdStr);
+                    int quantity = Integer.parseInt(quantityStr);
+                    if (!products.containsKey(productId)) {
+                        JOptionPane.showMessageDialog(parentFrame, "Product not found!", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    Product product = products.get(productId);
+                    if (product.getQuantity() < quantity) {
+                        JOptionPane.showMessageDialog(parentFrame, "Insufficient stock!", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    // Place the order
+                    Order order = new Order(customerName, product, quantity);
+                    orders.put(orderIdCounter++, order);
+                    product.setQuantity(product.getQuantity() - quantity); // Update stock
+                    JOptionPane.showMessageDialog(parentFrame, "Order placed successfully!");
+                    txtCustomerName.setText("");
+                    txtProductId.setText("");
+                    txtQuantity.setText("");
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(parentFrame, "Invalid input!", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        btnBack.addActionListener(e -> {
+            parentFrame.getContentPane().removeAll();
+            parentFrame.setLayout(new GridLayout(5, 1, 10, 10));
+
+            createMainMenu(parentFrame);
+            parentFrame.revalidate();
+            parentFrame.repaint();
+        });
+
+        parentFrame.revalidate();
+        parentFrame.repaint();
+    }
+
+    // View Orders
+    private static void viewOrders(JFrame parentFrame) {
+        parentFrame.getContentPane().removeAll();
+        parentFrame.setLayout(new BorderLayout());
+
+        DefaultListModel<String> orderListModel = new DefaultListModel<>();
+        JList<String> orderList = new JList<>(orderListModel);
+        orders.forEach((k, v) -> orderListModel.addElement("Order ID: " + k + ", Customer: " + v.getCustomerName() + ", Product: " + v.getProduct().getName() + ", Quantity: " + v.getQuantity()));
+
+        JScrollPane scrollPane = new JScrollPane(orderList);
+
+        parentFrame.add(scrollPane, BorderLayout.CENTER);
+
+        JButton btnBack = new JButton("Back");
+        parentFrame.add(btnBack, BorderLayout.SOUTH);
+
+        btnBack.addActionListener(e -> {
+            parentFrame.getContentPane().removeAll();
+            parentFrame.setLayout(new GridLayout(5, 1, 10, 10));
+
+            createMainMenu(parentFrame);
+            parentFrame.revalidate();
+            parentFrame.repaint();
+        });
+
+        parentFrame.revalidate();
+        parentFrame.repaint();
+    }
+
+    // Helper method to recreate the main menu after navigation
+    private static void createMainMenu(JFrame parentFrame) {
+        JButton btnAddProduct = new JButton("Add Product");
+        JButton btnViewProducts = new JButton("View Products");
+        JButton btnPlaceOrder = new JButton("Place Order");
+        JButton btnViewOrders = new JButton("View Orders");
+        JButton btnExit = new JButton("Exit");
+
+        parentFrame.add(btnAddProduct);
+        parentFrame.add(btnViewProducts);
+        parentFrame.add(btnPlaceOrder);
+        parentFrame.add(btnViewOrders);
+        parentFrame.add(btnExit);
+
+        btnAddProduct.addActionListener(e -> openAddProduct(parentFrame));
+        btnViewProducts.addActionListener(e -> viewProducts(parentFrame));
+        btnPlaceOrder.addActionListener(e -> placeOrder(parentFrame));
+        btnViewOrders.addActionListener(e -> viewOrders(parentFrame));
+        btnExit.addActionListener(e -> System.exit(0));
+    }
+}
+
+// Product Class
+class Product {
+    private String name;
+    private double price;
+    private int quantity;
+
+    public Product(String name, double price, int quantity) {
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    @Override
+    public String toString() {
+        return name + " - $" + price + " - " + quantity + " in stock";
+    }
+}
+
+// Order Class
+class Order {
+    private String customerName;
+    private Product product;
+    private int quantity;
+
+    public Order(String customerName, Product product, int quantity) {
+        this.customerName = customerName;
+        this.product = product;
+        this.quantity = quantity;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+}
